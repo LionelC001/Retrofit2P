@@ -1,25 +1,41 @@
 package com.lionel.retrofit2p.remote;
 
-import com.lionel.retrofit2p.CouponListResult;
+import java.util.concurrent.TimeUnit;
 
-import retrofit2.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RemoteSource {
 
-    private final Retrofit retrofit;
-    private final ApiService apiService;
+    private static final String DOMAIN = "https://jsonplaceholder.typicode.com/";
+
+    private static final RemoteSource instance = new RemoteSource();
+    private ApiService apiService;
 
     public RemoteSource() {
-        retrofit = new Retrofit.Builder()
+        Retrofit retrofit = new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl("http://60.250.92.20:8082")
+                .baseUrl(DOMAIN)
+                .client(getOkHttpClient())
                 .build();
         apiService = retrofit.create(ApiService.class);
     }
 
-    public Call<CouponListResult> getCouponList(CouponListRequest couponListRequest) {
-        return apiService.getCouponList(couponListRequest);
+    private OkHttpClient getOkHttpClient(){
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
+                .build();
+        return client;
+    }
+
+    public static RemoteSource getInstance() {
+        return instance;
+    }
+
+    public ApiService getApiService() {
+        return apiService;
     }
 }
